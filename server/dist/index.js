@@ -38,7 +38,7 @@ wss.on("connection", (socket) => {
                     text,
                 });
                 rooms.get(room)?.forEach((client) => {
-                    if (client.readyState === WebSocket.OPEN && client !== socket) {
+                    if (client.readyState === WebSocket.OPEN) {
                         client.send(payload);
                     }
                 });

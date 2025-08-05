@@ -15,25 +15,43 @@ wss.on("connection", (socket) => {
 
       // set name + join room
       if (parsed.type === "join") {
-        const { name, room } = parsed;
+  const { name, room } = parsed;
 
-        userNames.set(socket, name);
-        userRoom.set(socket, room);
+  const prevRoom = userRoom.get(socket);
+  if (prevRoom && rooms.has(prevRoom)) {
+    rooms.get(prevRoom)!.delete(socket);
 
-        if (!rooms.has(room)) {
-          rooms.set(room, new Set());
-        }
-        rooms.get(room)!.add(socket);
-
-        console.log(`${name} joined room ${room}`);
-        rooms.get(room)?.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN && client !== socket) {
-            client.send(`${name} joined room ${room}`)
-          }
-        })
-
-        return;
+    // optional: notify others you left
+    rooms.get(prevRoom)!.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN && client !== socket) {
+        client.send(
+          JSON.stringify({
+            type: 'notice',
+            text: `${name} left the room.`,
+          })
+        );
       }
+    });
+  }
+
+  userNames.set(socket, name);
+  userRoom.set(socket, room);
+
+  if (!rooms.has(room)) {
+    rooms.set(room, new Set());
+  }
+  rooms.get(room)!.add(socket);
+
+  // notify join
+  rooms.get(room)!.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN && client !== socket) {
+      client.send(`${name} joined room ${room}`);
+    }
+  });
+
+  return;
+}
+
 
       // Step 2: message
       if (parsed.type === "message") {
@@ -50,7 +68,7 @@ wss.on("connection", (socket) => {
         });
 
         rooms.get(room)?.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN && client !== socket) {
+          if (client.readyState === WebSocket.OPEN ) {
             client.send(payload);
           }
         });
