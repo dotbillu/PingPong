@@ -17,7 +17,7 @@ useEffect(() => {
   setMessages([]) // 🧹 clear messages when room changes
 }, [room])
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8000");
+        const ws = new WebSocket(import.meta.env.VITE_WS_URL);
         setWs(ws);
 
         ws.onmessage = (e) => {
